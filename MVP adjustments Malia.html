@@ -264,6 +264,8 @@ requests:[
 {id:'r3',sample:1,status:'live',initial:'M',why:'International student',area:'South side',max:900,move:'2027-01',help:'None',about:'Quiet, studies a lot, would love a calm home.'}]}}
 let db=S.get('twogen_v2',null)||seed();
 const save=()=>S.set('twogen_v2',db);
+const FORMSPREE_URL='https://formspree.io/f/YOUR_FORM_ID';
+function sendToTwoGen(p){try{fetch(FORMSPREE_URL,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(p)}).catch(()=>{})}catch(e){}}
 let sess=S.get('twogen_sess',null);
 const me=()=>sess&&sess!=='team'?db.users.find(u=>u.id===sess):null;
 const isTeam=()=>sess==='team';
@@ -308,7 +310,7 @@ ${su?`<div class="chk"><label><input type="checkbox" name="ok">I am 18 or older 
 $('#af').onsubmit=e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target)),er=m=>$('#ae').textContent=m,email=(d.e||'').trim().toLowerCase();
 if(!okEmail(email))return er('Enter a valid email address.');
 if(su){if((d.n||'').trim().length<2)return er('Add your full name.');if((d.p||'').length<6)return er('Use a password with at least 6 characters.');if(db.users.some(u=>u.email===email))return er('An account with this email exists. Log in instead.');if(!d.ok)return er('Please confirm the checkbox to continue.');
-const u={id:uid(),role:d.role,name:d.n.trim(),email,pw:hp(d.p),created:now()};db.users.push(u);save();sess=u.id;S.set('twogen_sess',sess);close_();showApp()}
+const u={id:uid(),role:d.role,name:d.n.trim(),email,pw:hp(d.p),created:now()};db.users.push(u);save();sendToTwoGen({_subject:'New TwoGen signup',role:u.role,name:u.name,email:u.email});sess=u.id;S.set('twogen_sess',sess);close_();showApp()}
 else{const u=db.users.find(x=>x.email===email&&x.pw===hp(d.p||''));if(!u)return er('Email or password does not match.');sess=u.id;S.set('twogen_sess',sess);close_();showApp();toast(u.q?'Welcome back, '+u.name.split(' ')[0]+'.':'Welcome back. Pick up where you left off.')}}}
 function teamLogin(){open_(`<div><h2 id="mt">Team login</h2><p>For the TwoGen team only. The team view shows members' private details.</p><form class="f" id="tf"><label>Team passcode<input name="c" type="password" autocomplete="off"></label><div class="err" id="te" role="alert"></div><button class="btn">Open team view</button></form></div>`);
 $('#tf').onsubmit=e=>{e.preventDefault();if(new FormData(e.target).get('c')!==TEAM_CODE)return $('#te').textContent='Wrong passcode.';sess='team';S.set('twogen_sess',sess);close_();showApp()}}
@@ -361,8 +363,8 @@ function videoModalUnused(){open_(`<div><h2 id="mt">TwoGen in 49 seconds</h2><p>
 const _close=close_;close_=function(){const v=$('#mc video');v&&v.pause();_close()};
 
 /* ---------- phone sign-up ---------- */
-function callMe(){open_(`<div><h2 id="mt">We'll call you</h2><p>Leave a name and number. A person on our team calls back within two working days and fills in the sign-up with you.</p><form class="f" id="cf" novalidate><label>Your name<input name="n" autocomplete="name"></label><label>Phone number<input name="ph" type="tel" autocomplete="tel"></label><div class="two"><label>I am<select name="r"><option value="host">A host with a room</option><option value="lodger">Looking for a room</option></select></label><label>Best time to call<select name="t"><option>Morning</option><option>Afternoon</option><option>Evening</option></select></label></div><div class="err" id="ce" role="alert"></div><button class="btn">Request a call</button></form><p class="small" style="margin:12px 0 0">Prototype: the request is stored in this browser and shown in the team view. Nobody will actually call.</p></div>`);
-$('#cf').onsubmit=e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));if((d.n||'').trim().length<2)return $('#ce').textContent='Add your name.';if((d.ph||'').replace(/\D/g,'').length<7)return $('#ce').textContent='Add a phone number we can call.';(db.calls=db.calls||[]).push({id:uid(),name:d.n.trim(),phone:d.ph.trim(),role:d.r,time:d.t,date:now(),status:'To call'});save();close_();toast('Thanks. We will call you '+d.t.toLowerCase()+'.')}}
+function callMe(){open_(`<div><h2 id="mt">We'll call you</h2><p>Leave a name and number. A person on our team calls back within two working days and fills in the sign-up with you.</p><form class="f" id="cf" novalidate><label>Your name<input name="n" autocomplete="name"></label><label>Phone number<input name="ph" type="tel" autocomplete="tel"></label><div class="two"><label>I am<select name="r"><option value="host">A host with a room</option><option value="lodger">Looking for a room</option></select></label><label>Best time to call<select name="t"><option>Morning</option><option>Afternoon</option><option>Evening</option></select></label></div><div class="err" id="ce" role="alert"></div><button class="btn">Request a call</button></form><p class="small" style="margin:12px 0 0">Your request is sent to the TwoGen team.</p></div>`);
+$('#cf').onsubmit=e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));if((d.n||'').trim().length<2)return $('#ce').textContent='Add your name.';if((d.ph||'').replace(/\D/g,'').length<7)return $('#ce').textContent='Add a phone number we can call.';(db.calls=db.calls||[]).push({id:uid(),name:d.n.trim(),phone:d.ph.trim(),role:d.r,time:d.t,date:now(),status:'To call'});save();sendToTwoGen({_subject:'TwoGen call-back request',name:d.n.trim(),phone:d.ph.trim(),role:d.r,best_time:d.t});close_();toast('Thanks. We will call you '+d.t.toLowerCase()+'.')}}
 function called(id){db.calls.find(c=>c.id===id).status='Called';save();renderApp('review');toast('Marked as called.')}
 
 /* ---------- presentation demo ---------- */
