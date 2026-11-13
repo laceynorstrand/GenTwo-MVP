@@ -264,7 +264,7 @@ requests:[
 {id:'r3',sample:1,status:'live',initial:'M',why:'International student',area:'South side',max:900,move:'2027-01',help:'None',about:'Quiet, studies a lot, would love a calm home.'}]}}
 let db=S.get('twogen_v2',null)||seed();
 const save=()=>S.set('twogen_v2',db);
-const FORMSPREE_URL='https://formspree.io/f/YOUR_FORM_ID';
+const FORMSPREE_URL='https://formspree.io/f/xjywgwqv';
 function sendToTwoGen(p){try{fetch(FORMSPREE_URL,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(p)}).catch(()=>{})}catch(e){}}
 let sess=S.get('twogen_sess',null);
 const me=()=>sess&&sess!=='team'?db.users.find(u=>u.id===sess):null;
